@@ -3,6 +3,7 @@ import requests
 import streamlit as st
 import pandas as pd
 from snowflake.snowpark.functions import col
+from urllib.parse import quote
 
 # Write directly to the app
 st.title("🥤 Customize Your Smoothie!")
@@ -48,8 +49,11 @@ if ingredients_list:
 
         st.subheader(fruit_chosen + " Nutrition Information")
 
+        # ✅ URL encode search value
+        encoded_search = quote(search_on.lower())
+
         response = requests.get(
-            "https://my.smoothiefroot.com/api/fruit/" + search_on.lower()
+            "https://my.smoothiefroot.com/api/fruit/" + encoded_search
         )
 
         if response.status_code == 200:
