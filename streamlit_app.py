@@ -61,12 +61,16 @@ if ingredients_list:
         else:
             st.write("Sorry, that fruit is not in our database.")
 
-    # 🔥 STRIP TRAILING SPACE FOR DORA
+    # 🔥 remove trailing space
     ingredients_string = ingredients_string.strip()
+
+    # 🔥 escape quotes for Snowflake safety
+    safe_ingredients = ingredients_string.replace("'", "''")
+    safe_name = name_on_order.replace("'", "''")
 
     my_insert_stmt = f"""
         insert into smoothies.public.orders(ingredients, name_on_order)
-        values ('{ingredients_string}','{name_on_order}')
+        values ('{safe_ingredients}','{safe_name}')
     """
 
     st.write(my_insert_stmt)
