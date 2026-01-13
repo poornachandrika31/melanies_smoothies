@@ -15,6 +15,7 @@ st.write("The name on your Smoothie will be:", name_on_order)
 # Connect to Snowflake
 cnx = st.connection("snowflake")
 session = cnx.session()
+session.sql("use warehouse ACME_WH").collect()
 
 # Get dataframe with SEARCH_ON
 my_dataframe = session.table("smoothies.public.fruit_options") \
