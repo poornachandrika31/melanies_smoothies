@@ -29,10 +29,12 @@ my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT
 # st.dataframe(data=my_dataframe, use_container_width=True)
 
 my_dataframe = session.table("smoothies.public.fruit_options") \
-    .select(col("FRUIT_NAME")) \
+    .select(col("FRUIT_NAME"), col("SEARCH_ON")) \
     .collect()
 
-fruit_list = [row["FRUIT_NAME"] for row in my_dataframe]
+fruit_dict = {row["FRUIT_NAME"]: row["SEARCH_ON"] for row in my_dataframe}
+
+fruit_list = list(fruit_dict.keys())
 
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients:",
@@ -45,16 +47,23 @@ if ingredients_list:
     ingredients_string = ''
 
     for fruit_chosen in ingredients_list:
-        ingredients_string += fruit_chosen + ' '
-        st.subheader(fruit_chosen + " Nutrition Information")
-        smoothiefroot_response = requests.get(
-            "https://my.smoothiefroot.com/api/fruit/" + fruit_chosen.lower()
-        )
+    ingredients_string += fruit_chosen + ' '
 
+    st.subheader(fruit_chosen + " Nutrition Information")
+
+    search_value = fruit_dict[fruit_chosen]   # 🔥 THIS LINE WAS MISSING
+
+    smoothiefroot_response = requests.get(
+        "https://my.smoothiefroot.com/api/fruit/" + search_value.lower()
+    )
+
+    if smoothiefroot_response.status_code == 200:
         st.dataframe(
             data=smoothiefroot_response.json(),
             use_container_width=True
         )
+    else:
+        st.write("Sorry, that fruit is not in our database.")
 
     my_insert_stmt = """ insert into smoothies.public.orders(ingredients, name_on_order)
         values ('""" + ingredients_string + """','""" + name_on_order + """')"""
