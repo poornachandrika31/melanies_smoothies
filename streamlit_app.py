@@ -31,6 +31,8 @@ ingredients_list = st.multiselect(
     max_selections=5
 )
 
+my_insert_stmt = None
+
 # When user selects fruits
 if ingredients_list:
     ingredients_string = ""
@@ -39,7 +41,6 @@ if ingredients_list:
 
         ingredients_string += fruit_chosen + " "
 
-        # 🔥 Get SEARCH_ON value using pandas
         search_on = pd_df.loc[
             pd_df["FRUIT_NAME"] == fruit_chosen,
             "SEARCH_ON"
@@ -49,7 +50,6 @@ if ingredients_list:
 
         st.subheader(fruit_chosen + " Nutrition Information")
 
-        # ✅ URL encode search value
         encoded_search = quote(search_on.lower())
 
         response = requests.get(
@@ -61,7 +61,9 @@ if ingredients_list:
         else:
             st.write("Sorry, that fruit is not in our database.")
 
-    # Insert statement
+    # 🔥 STRIP TRAILING SPACE FOR DORA
+    ingredients_string = ingredients_string.strip()
+
     my_insert_stmt = f"""
         insert into smoothies.public.orders(ingredients, name_on_order)
         values ('{ingredients_string}','{name_on_order}')
@@ -72,6 +74,6 @@ if ingredients_list:
 # Submit button
 time_to_insert = st.button("Submit Order")
 
-if time_to_insert:
+if time_to_insert and my_insert_stmt:
     session.sql(my_insert_stmt).collect()
     st.success("Your Smoothie is ordered, " + name_on_order + "!", icon="✅")
