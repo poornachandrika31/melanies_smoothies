@@ -1,16 +1,17 @@
-# Import python packages
 import requests
 import streamlit as st
 import pandas as pd
 from snowflake.snowpark.functions import col
 from urllib.parse import quote
 
-# Write directly to the app
 st.title("🥤 Customize Your Smoothie!")
 st.write("Choose the fruits you want in your custom Smoothie!")
 
 name_on_order = st.text_input("Name on Smoothie:")
 st.write("The name on your Smoothie will be:", name_on_order)
+
+# NEW: filled checkbox
+order_filled = st.checkbox("Mark order as filled")
 
 # Connect to Snowflake
 cnx = st.connection("snowflake")
@@ -22,10 +23,10 @@ my_dataframe = session.table("smoothies.public.fruit_options") \
     .select(col("FRUIT_NAME"), col("SEARCH_ON")) \
     .collect()
 
-# Convert Snowpark DF → Pandas DF
+# Convert Snowpark → Pandas
 pd_df = pd.DataFrame(my_dataframe)
 
-# Multiselect list
+# Multiselect
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients:",
     pd_df["FRUIT_NAME"].tolist(),
@@ -34,8 +35,8 @@ ingredients_list = st.multiselect(
 
 my_insert_stmt = None
 
-# When user selects fruits
 if ingredients_list:
+
     ingredients_string = ""
 
     for fruit_chosen in ingredients_list:
@@ -62,16 +63,18 @@ if ingredients_list:
         else:
             st.write("Sorry, that fruit is not in our database.")
 
-    # 🔥 remove trailing space
+    # Clean spaces
     ingredients_string = ingredients_string.strip()
 
-    # 🔥 escape quotes for Snowflake safety
+    # Escape quotes
     safe_ingredients = ingredients_string.replace("'", "''")
     safe_name = name_on_order.replace("'", "''")
 
+    filled_value = str(order_filled).upper()
+
     my_insert_stmt = f"""
-        insert into smoothies.public.orders(ingredients, name_on_order)
-        values ('{safe_ingredients}','{safe_name}')
+        insert into smoothies.public.orders(ingredients, name_on_order, order_filled)
+        values ('{safe_ingredients}','{safe_name}', {filled_value})
     """
 
     st.write(my_insert_stmt)
